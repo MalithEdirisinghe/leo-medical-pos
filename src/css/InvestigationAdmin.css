@@ -1,0 +1,181 @@
+/* General Styles */
+.investigation-admin {
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Form Container */
+.form-container-invest {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.form-container-invest input,
+.form-container-invest select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 70%;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Investigations Table Container */
+.investigations-table {
+    margin-top: 30px;
+    max-width: 1000px;
+    margin: 20px auto;
+    overflow-x: auto;
+    /* Allow horizontal scrolling for larger tables */
+    max-height: 400px;
+    /* Limit the height of the table container */
+    overflow-y: auto;
+    /* Add vertical scrolling when content overflows */
+    display: block;
+}
+
+/* Table Styling */
+.drug-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.drug-table th,
+.drug-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.drug-table th {
+    background-color: #f4f4f4;
+}
+
+.drug-table td {
+    text-align: right;
+}
+
+/* Action buttons inside table */
+button {
+    margin: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e53935;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .form-container {
+        max-width: 100%;
+    }
+
+    .form-container-invest input,
+    .form-container-invest select {
+        width: 100%;
+    }
+
+    /* Investigations Table */
+    .investigations-table {
+        max-width: 100%;
+        max-height: 300px;
+        /* Adjust height for mobile */
+    }
+
+    .drug-table th,
+    .drug-table td {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    button {
+        padding: 8px;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 1024px) {
+    .form-container-invest {
+        max-width: 80%;
+    }
+
+    .form-container-invest input,
+    .form-container-invest select {
+        width: 80%;
+    }
+
+    .drug-table th,
+    .drug-table td {
+        padding: 10px;
+    }
+}
+
+/* Search Bar */
+.search-containers {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.search-containers input {
+    padding: 10px;
+    width: 250px;
+    border-radius: 45px;
+    border: 1px solid #ddd;
+}
+
+/* Percentage Filter Styling */
+.percentage-filter {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+  
+  .percentage-filter select {
+    padding: 10px;
+    width: 200px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }  
+  

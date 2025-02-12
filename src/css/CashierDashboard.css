@@ -1,0 +1,189 @@
+/* Scoped Styles for CashierDashboard */
+.cashier-dashboard {
+  padding: 150px;
+  background-color: #fffefe; /* Light gray background */
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Roboto', sans-serif;
+  transition: all 0.3s ease;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 32px;
+  color: #333;
+  text-transform: uppercase;
+}
+
+/* Cashier Information Styling */
+.cashier-info {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.cashier-info p {
+  font-size: 20px;
+  margin: 10px 0;
+  color: #444;
+  font-weight: 500;
+}
+
+.cashier-info p strong {
+  color: #007bff;
+}
+
+/* Button Container Styling */
+.button-containers {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 800px;
+  gap: 30px;
+}
+
+.button-containers button {
+  padding: 15px 30px;
+  background-color: #28a745; /* Green background */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 180px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.button-containers button:hover {
+  background-color: #218838;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.button-containers button:active {
+  transform: scale(0.98);
+}
+
+.button-containers button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Logout button styling */
+.logout-button-container {
+  margin-top: 20px;
+}
+
+.logout-button-container button {
+  padding: 15px 30px;
+  background-color: #dc3545; /* Red background for logout */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 180px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.logout-button-container button:hover {
+  background-color: #c82333; /* Darker red on hover */
+}
+
+.logout-button-container button:active {
+  transform: scale(0.98);
+}
+
+.logout-button-container button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Modal Styling */
+.modal-overlay-cashier {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content-cashier {
+  background-color: white;
+  padding: 50px;
+  border-radius: 8px;
+  max-width: 150%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center; /* Center buttons horizontally */
+}
+
+/* Button Styling Inside Modal */
+.modal-content-cashier button {
+  margin: 10px 0; /* Add space between buttons */
+  padding: 10px 20px;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 200px;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+/* Close Button Styling */
+.modal-content-cashier button:last-of-type {
+  background-color: #ec0417;  /* Light red background */
+  color: #ecdbdd;  /* Dark red text color for contrast */
+}
+
+.modal-content-cashier button:last-of-type:hover {
+  background-color: #e26470;  /* Slightly darker red on hover */
+}
+
+.modal-content-cashier button:last-of-type:active {
+  transform: scale(0.98);  /* Slight scale down on button click */
+}
+/* Modal Close Icon */
+.modal-content-cashier {
+  position: relative; /* Make sure the modal content has a relative position for positioning the icon */
+}
+
+.modal-content-cashier .close-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 30px;
+  color: #721c24; /* Dark red color */
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.modal-content-cashier .close-icon:hover {
+  color: #f8d7da; /* Light red color on hover */
+}
+
+.modal-content-cashier .close-icon:active {
+  transform: scale(0.95); /* Slight scale effect on click */
+}

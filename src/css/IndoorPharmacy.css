@@ -1,0 +1,488 @@
+.indoor-pharmacy {
+    padding: 50px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+
+    width: 95vw;
+    height: 95vh;
+
+    /* Add a border around the whole screen */
+    border: 2px solid #000;
+
+    /* To ensure content is centered */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.indoor-pharmacy h1 {
+    text-align: center;
+    top: 50px;
+    position: absolute;
+}
+
+/* Table container with fixed position */
+.table-container {
+    position: absolute;
+    top: 120px;
+    left: 100px;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #fff;
+    width: 700px;
+    z-index: 1000;
+}
+
+/* Drugs table styles */
+.drugs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.drugs-table th,
+.drugs-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.drugs-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.drugs-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.drugs-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Search bar styles */
+.search-container-indoor {
+    margin-top: 70px;
+    text-align: center;
+}
+
+.search-bar-indoor {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 45px;
+    width: 150%;
+    max-width: 300px;
+    box-sizing: border-box;
+    position: fixed;
+    top: 400px;
+    left: 100px;
+}
+
+.selected-drug-details {
+    margin-top: 350px;
+    padding: 55px;
+    background-color: #d5f3f5;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    width: 450px;
+    height: 230px;
+    position: relative;
+    top: 280px;
+    left: -640px;
+}
+
+.selected-drug-details h3 {
+    text-align: justify;
+}
+
+.selected-drug-details p {
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+.add-to-cart {
+    position: absolute;
+    bottom: 25%;
+    left: 60%;
+}
+
+.cart-details {
+    padding: 70px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    width: 550px;
+    position: absolute;
+    bottom: 350px;
+    right: 100px;
+    max-height: 50%;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.cart-table-container {
+    margin-top: 20px;
+    width: 130%;
+    display: flex;
+    flex-direction: column;
+    max-height: 60%;
+}
+
+.Drugs-table-container {
+    width: 130%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 520px;
+    margin-left: 15px;
+}
+
+.Drug-table-txt {
+    margin-bottom: 520px;
+    width: 100%;
+}
+
+.cart-table-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #080808;
+    border-radius: 8px;
+    position: relative;
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cart-table th,
+.cart-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.cart-summary {
+    margin-top: 20px;
+    font-weight: bold;
+    width: 100%;
+    text-align: right;
+}
+
+.doctor-dropdown {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 150%;
+    max-width: 300px;
+    box-sizing: border-box;
+    position: fixed;
+    top: 400px;
+    left: 510px;
+    background-color: white;
+}
+
+.charges-dropdowns {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.charge-dropdown {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    min-width: 200px;
+}
+
+.dropdown-container {
+    margin-bottom: 10px;
+}
+
+.dropdown-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.sell-button {
+    margin-top: -15px;
+    padding: 10px 20px;
+    background-color: #8b07c9;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    position: relative;
+    bottom: 60px;
+}
+
+.sell-button:hover {
+    background-color: #cc0000;
+}
+
+/* Modal Overlay */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 450px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+    text-align: center;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Modal Header Styling */
+.modal-content h2 {
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333333;
+}
+
+/* Close Button Styling */
+.modal-content .close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.5rem;
+    color: #888888;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: color 0.3s ease;
+}
+
+.modal-content .close:hover {
+    color: #ff3b3b;
+    transform: scale(1.1);
+}
+
+/* Individual Rows */
+.modal-content div {
+    margin: 15px 0;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #444444;
+    font-weight: 500;
+}
+
+.modal-content div label {
+    font-weight: bold;
+    color: #333333;
+}
+
+.modal-content div span {
+    color: #555555;
+}
+
+/* Cash Amount Input Field */
+.modal-content input {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
+    width: 50%;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.modal-content input:focus {
+    border-color: #8b07c9;
+    box-shadow: 0 0 5px rgba(139, 7, 201, 0.4);
+}
+
+/* Print Button */
+.modal-content button {
+    background-color: #28a745;
+    color: #ffffff;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+.modal-content button:hover {
+    background-color: #218838;
+}
+
+/* Animation for Modal */
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+/* Responsive Breakpoints */
+
+/* Mobile devices */
+@media (max-width: 600px) {
+    .indoor-pharmacy {
+        padding: 20px;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .table-container {
+        left: 0;
+        width: 100%;
+        max-height: 200px;
+    }
+
+    .search-bar-indoor {
+        width: 90%;
+        left: 5%;
+        top: 350px;
+    }
+
+    .selected-drug-details {
+        width: 100%;
+        height: auto;
+        position: static;
+        top: 0;
+        right: 0;
+        margin-top: 20px;
+    }
+
+    .cart-details {
+        width: 100%;
+        position: static;
+        bottom: auto;
+        margin-top: 20px;
+    }
+
+    .cart-table-container {
+        width: 100%;
+    }
+
+    .doctor-dropdown,
+    .charge-dropdown {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .sell-button {
+        width: 100%;
+        margin-top: 20px;
+    }
+}
+
+/* Tablet devices */
+@media (max-width: 768px) {
+    .indoor-pharmacy {
+        padding: 30px;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .table-container {
+        left: 0;
+        width: 100%;
+        max-height: 220px;
+    }
+
+    .search-bar-indoor {
+        width: 80%;
+        left: 10%;
+        top: 380px;
+    }
+
+    .selected-drug-details {
+        width: 100%;
+        height: auto;
+        margin-top: 20px;
+    }
+
+    .cart-details {
+        width: 100%;
+        position: static;
+        bottom: auto;
+        margin-top: 20px;
+    }
+
+    .cart-table-container {
+        width: 100%;
+    }
+
+    .doctor-dropdown,
+    .charge-dropdown {
+        width: 100%;
+    }
+
+    .sell-button {
+        width: 100%;
+        margin-top: 20px;
+    }
+}
+
+/* Larger screens */
+@media (min-width: 1024px) {
+    .indoor-pharmacy {
+        padding: 50px;
+        width: 95vw;
+        height: 95vh;
+    }
+
+    .table-container {
+        left: 100px;
+        width: 700px;
+    }
+
+    .search-bar-indoor {
+        width: 150%;
+        max-width: 300px;
+        left: 100px;
+        top: 400px;
+    }
+
+    .selected-drug-details {
+        width: 450px;
+        height: 230px;
+        top: 280px;
+        right: 10px;
+    }
+
+    .cart-details {
+        width: 550px;
+        position: absolute;
+        bottom: 350px;
+        right: 100px;
+    }
+}
