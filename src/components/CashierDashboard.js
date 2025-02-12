@@ -57,7 +57,7 @@ const CashierDashboard = () => {
         if (buttonType === 'Indoor') {
             navigate('/indoor-pharmacy');
         }else if(buttonType === 'Outdoor'){
-            navigate('/indoor-pharmacy');
+            navigate('/outdoor-pharmacy');
         }
         setIsModalOpen(false);  // Close the modal after button click
     };

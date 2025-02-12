@@ -10,6 +10,7 @@ import InvestigationAdmin from './components/InvestigationAdmin';
 import CashierDashboard from './components/CashierDashboard';
 import IndoorPharmacy from './components/cashier/IndoorPharmacy';
 import AdminAction from './components/AdminAction';
+import OutdoorPharmacy from './components/cashier/OutdoorPharmacy';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/cashier-dashboard" element={<CashierDashboard />} />
         <Route path="/indoor-pharmacy" element={<IndoorPharmacy />} />
         <Route path="/admin-action" element={<AdminAction />} />
+        <Route path="/outdoor-pharmacy" element={<OutdoorPharmacy />} />
       </Routes>
     </Router>
   );

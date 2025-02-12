@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, db } from '../../firebaseConfig';
+import { collection, getDocs, db, doc, updateDoc } from '../../firebaseConfig';
 import '../../css/IndoorPharmacy.css';
 
 const IndoorPharmacy = () => {
@@ -18,6 +18,7 @@ const IndoorPharmacy = () => {
     const [showModal, setShowModal] = useState(false); // To toggle the modal visibility
     const [cashAmount, setCashAmount] = useState(0); // Cash entered by the cashier
     const [balance, setBalance] = useState(0);
+    const [isPrinting, setIsPrinting] = useState(false);
 
     // Fetch drugs from Firebase
     useEffect(() => {
@@ -59,33 +60,38 @@ const IndoorPharmacy = () => {
         }
     };
 
-    // Handle Add to Cart button click
     const handleAddToCart = () => {
         if (selectedDrug && selectedDrug.quantity > 0) {
             const existingItemIndex = cart.findIndex(item => item.id === selectedDrug.id);
             const drugIndex = drugs.findIndex(drug => drug.id === selectedDrug.id);
 
-            if (drugIndex >= 0 && drugs[drugIndex].quantity >= selectedDrug.quantity) {
-                // Update cart
-                if (existingItemIndex >= 0) {
-                    // If the drug is already in the cart, update its quantity
-                    const updatedCart = [...cart];
-                    updatedCart[existingItemIndex].quantity += selectedDrug.quantity;
-                    setCart(updatedCart);
+            if (drugIndex >= 0) {
+                const totalQuantityInCart = existingItemIndex >= 0
+                    ? cart[existingItemIndex].quantity + selectedDrug.quantity
+                    : selectedDrug.quantity;
+
+                // Check if total quantity including cart is available
+                if (drugs[drugIndex].quantity >= totalQuantityInCart) {
+                    // Update cart
+                    if (existingItemIndex >= 0) {
+                        const updatedCart = [...cart];
+                        updatedCart[existingItemIndex].quantity += selectedDrug.quantity;
+                        setCart(updatedCart);
+                    } else {
+                        setCart([...cart, selectedDrug]);
+                    }
+
+                    // Don't deduct from drugs list yet - just display available quantity
+                    const updatedDrugs = [...drugs];
+                    updatedDrugs[drugIndex] = {
+                        ...updatedDrugs[drugIndex],
+                        displayQuantity: updatedDrugs[drugIndex].quantity - totalQuantityInCart
+                    };
+                    setDrugs(updatedDrugs);
+                    setSelectedDrug(null);
                 } else {
-                    // If the drug is not in the cart, add it
-                    setCart([...cart, selectedDrug]);
+                    alert('Not enough stock available.');
                 }
-
-                // Deduct quantity from the main list
-                const updatedDrugs = [...drugs];
-                updatedDrugs[drugIndex].quantity -= selectedDrug.quantity;
-                setDrugs(updatedDrugs);
-
-                // Optionally reset the selected drug after adding to cart
-                setSelectedDrug(null);
-            } else {
-                alert('Not enough stock available.');
             }
         } else {
             alert('Please select a valid quantity');
@@ -194,14 +200,44 @@ const IndoorPharmacy = () => {
         setBalance(enteredCash - totalWithCharges);
     };
 
-    const handlePrintBill = () => {
-        const billContent = document.getElementById('bill-section').innerHTML;
-        const originalContent = document.body.innerHTML;
+    const handlePrintBill = async () => {
+        setIsPrinting(true); // Start loading
+        try {
+            // First update the database
+            for (const item of cart) {
+                const drugRef = doc(db, 'drugs', item.id);
 
-        document.body.innerHTML = billContent; // Replace body content temporarily
-        window.print(); // Trigger print dialog
-        document.body.innerHTML = originalContent; // Restore original content
-        window.location.reload(); // Reload to re-render styles
+                // Get the current drug data
+                const drugSnapshot = await getDocs(collection(db, 'drugs'));
+                const currentDrug = drugSnapshot.docs
+                    .find(doc => doc.id === item.id)?.data();
+
+                if (currentDrug) {
+                    // Update the quantity in the database
+                    await updateDoc(drugRef, {
+                        quantity: currentDrug.quantity - item.quantity
+                    });
+                }
+            }
+
+            // Then handle the printing
+            const billContent = document.getElementById('bill-section').innerHTML;
+            const originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = billContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+
+            // Show success message
+            alert('Sale completed successfully!');
+
+            // Reload the page to refresh the drug list
+            window.location.reload();
+        } catch (error) {
+            console.error('Error updating database:', error);
+            alert('Error completing sale. Please try again.');
+            setIsPrinting(false); // Stop loading on error
+        }
     };
 
     return (
@@ -452,10 +488,24 @@ const IndoorPharmacy = () => {
                         {/* Print Button */}
                         <div>
                             <button
-                                onClick={handlePrintBill} // Attach the print handler
-                                style={{ backgroundColor: 'green', color: 'white' }}
+                                onClick={handlePrintBill}
+                                disabled={isPrinting}
+                                style={{
+                                    backgroundColor: 'green',
+                                    color: 'white',
+                                    position: 'relative',
+                                    minWidth: '100px',
+                                    padding: '10px 10px'
+                                }}
                             >
-                                Print
+                                {isPrinting ? (
+                                    <>
+                                        <div className="spinner"></div>
+                                        <span style={{ opacity: 0 }}>Print</span>
+                                    </>
+                                ) : (
+                                    'Print'
+                                )}
                             </button>
                         </div>
                     </div>
