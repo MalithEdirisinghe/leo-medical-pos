@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, db } from '../../firebaseConfig';
+import { collection, getDocs, db, doc, updateDoc, addDoc } from '../../firebaseConfig';
 import '../../css/IndoorPharmacy.css'; // We can reuse the same CSS
 
 const OutdoorPharmacy = () => {
@@ -12,6 +12,7 @@ const OutdoorPharmacy = () => {
     const [showModal, setShowModal] = useState(false);
     const [cashAmount, setCashAmount] = useState(0);
     const [balance, setBalance] = useState(0);
+    const [isPrinting, setIsPrinting] = useState(false);
 
     // Fetch drugs from Firebase
     useEffect(() => {
@@ -69,11 +70,6 @@ const OutdoorPharmacy = () => {
                     setCart([...cart, selectedDrug]);
                 }
 
-                // Deduct quantity from the main list
-                const updatedDrugs = [...drugs];
-                updatedDrugs[drugIndex].quantity -= selectedDrug.quantity;
-                setDrugs(updatedDrugs);
-
                 setSelectedDrug(null);
             } else {
                 alert('Not enough stock available.');
@@ -85,15 +81,6 @@ const OutdoorPharmacy = () => {
 
     // Handle Remove from Cart button click
     const handleRemoveFromCart = (item) => {
-        // Restore the quantity back to the main list
-        const drugIndex = drugs.findIndex(drug => drug.id === item.id);
-        if (drugIndex >= 0) {
-            const updatedDrugs = [...drugs];
-            updatedDrugs[drugIndex].quantity += item.quantity;
-            setDrugs(updatedDrugs);
-        }
-
-        // Remove the item from the cart
         const updatedCart = cart.filter(cartItem => cartItem.id !== item.id);
         setCart(updatedCart);
     };
@@ -120,14 +107,74 @@ const OutdoorPharmacy = () => {
         setBalance(enteredCash - totalAmount);
     };
 
-    const handlePrintBill = () => {
-        const billContent = document.getElementById('bill-section').innerHTML;
-        const originalContent = document.body.innerHTML;
+    const handlePrintBill = async () => {
+        setIsPrinting(true);
+        try {
+            // 1. Update each drug's quantity in Firestore
+            for (const item of cart) {
+                const drugRef = doc(db, 'drugs', item.id);
 
-        document.body.innerHTML = billContent;
-        window.print();
-        document.body.innerHTML = originalContent;
-        window.location.reload();
+                // Get the latest snapshot (not using local state only)
+                const drugSnapshot = await getDocs(collection(db, 'drugs'));
+                const currentDrug = drugSnapshot.docs.find(doc => doc.id === item.id)?.data();
+
+                if (currentDrug) {
+                    const updatedQuantity = currentDrug.quantity - item.quantity;
+
+                    // Protect against negative values
+                    if (updatedQuantity >= 0) {
+                        await updateDoc(drugRef, {
+                            quantity: updatedQuantity
+                        });
+                    }
+                }
+            }
+
+            // 2. Save sale to Firestore
+            const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+            await addDoc(collection(db, 'outdoorSales'), {
+                timestamp: new Date(),
+                cashier: localStorage.getItem('cashierName') || 'Unknown',
+                cartItems: cart,
+                totalAmount: cartTotal,
+                cashReceived: cashAmount,
+                balance: balance,
+            });
+
+            // 3. Print in new tab
+            const billContent = document.getElementById('bill-section').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Print Bill</title></head>
+                <body onload="window.print(); window.close();">
+                    ${billContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+
+            // 4. Reset UI
+            setCart([]);
+            setSelectedDrug(null);
+            setCashAmount(0);
+            setBalance(0);
+            setShowModal(false);
+
+            // Re-fetch updated drug list
+            const drugsCollection = collection(db, 'drugs');
+            const drugSnapshot = await getDocs(drugsCollection);
+            const drugList = drugSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setDrugs(drugList);
+
+            alert('Sale completed and saved to database.');
+        } catch (error) {
+            console.error('Error completing sale:', error);
+            alert('Something went wrong while processing the sale.');
+        } finally {
+            setIsPrinting(false); // ✅ Stop spinner
+        }
     };
 
     return (
@@ -297,11 +344,36 @@ const OutdoorPharmacy = () => {
 
                         {/* Print Button */}
                         <div>
-                            <button
+                            {/* <button
                                 onClick={handlePrintBill}
                                 style={{ backgroundColor: 'green', color: 'white' }}
                             >
                                 Print
+                            </button> */}
+                            <button
+                                onClick={handlePrintBill}
+                                disabled={isPrinting}
+                                style={{
+                                    backgroundColor: isPrinting ? '#ccc' : 'green',
+                                    color: 'white',
+                                    position: 'relative',
+                                    padding: '10px 20px',
+                                    cursor: isPrinting ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {isPrinting ? (
+                                    <div className="spinner" style={{
+                                        border: '3px solid #f3f3f3',
+                                        borderTop: '3px solid #00b300', // ✅ change color here
+                                        borderRadius: '50%',
+                                        width: '16px',
+                                        height: '16px',
+                                        animation: 'spin 1s linear infinite',
+                                        margin: '0 auto'
+                                    }} />
+                                ) : (
+                                    'Print'
+                                )}
                             </button>
                         </div>
                     </div>

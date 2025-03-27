@@ -174,6 +174,7 @@ const InvestigationAdmin = () => {
             onChange={(e) => setPercentageFilter(e.target.value)} // Update percentage filter
           >
             <option value="">Select Percentage</option>
+            <option value="">All</option>
             <option value="10%">10%</option>
             <option value="20%">20%</option>
             <option value="30%">30%</option>

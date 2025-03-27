@@ -35,7 +35,7 @@ const CashierDashboard = () => {
                 setIsModalOpen(true);
                 break;
             case 'investigation':
-                navigate('/admin-investigation');
+                navigate('/investigation');
                 break;
             case 'dressing':
                 navigate('/admin-dressing');

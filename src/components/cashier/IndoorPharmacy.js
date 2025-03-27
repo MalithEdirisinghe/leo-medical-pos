@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, db, doc, updateDoc } from '../../firebaseConfig';
+import { collection, getDocs, db, doc, updateDoc, addDoc } from '../../firebaseConfig';
 import '../../css/IndoorPharmacy.css';
 
 const IndoorPharmacy = () => {
@@ -19,6 +19,7 @@ const IndoorPharmacy = () => {
     const [cashAmount, setCashAmount] = useState(0); // Cash entered by the cashier
     const [balance, setBalance] = useState(0);
     const [isPrinting, setIsPrinting] = useState(false);
+    const cashierName = localStorage.getItem("cashierName") || "Unknown";
 
     // Fetch drugs from Firebase
     useEffect(() => {
@@ -100,14 +101,6 @@ const IndoorPharmacy = () => {
 
     // Handle Remove from Cart button click
     const handleRemoveFromCart = (item) => {
-        // Restore the quantity back to the main list
-        const drugIndex = drugs.findIndex(drug => drug.id === item.id);
-        if (drugIndex >= 0) {
-            const updatedDrugs = [...drugs];
-            updatedDrugs[drugIndex].quantity += item.quantity;
-            setDrugs(updatedDrugs);
-        }
-
         // Remove the item from the cart
         const updatedCart = cart.filter(cartItem => cartItem.id !== item.id);
         setCart(updatedCart);
@@ -201,42 +194,71 @@ const IndoorPharmacy = () => {
     };
 
     const handlePrintBill = async () => {
-        setIsPrinting(true); // Start loading
+        setIsPrinting(true);
         try {
-            // First update the database
+            // Save sale to Firestore
+            const doctorObj = doctors.find(doc => doc.id === selectedDoctor);
+            const doctorChargeValue = parseFloat(doctorCharges.find(c => c.id === selectedDoctorCharge)?.charge || 0);
+            const channelingChargeValue = parseFloat(channelingCharges.find(c => c.id === selectedChannelingCharge)?.charge || 0);
+            const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const totalAmount = cartTotal + doctorChargeValue + channelingChargeValue;
+    
+            await addDoc(collection(db, "indoorSales"), {
+                timestamp: new Date(),
+                cashier: cashierName || "Unknown",
+                doctor: doctorObj?.name || "Unknown",
+                doctorCharge: doctorChargeValue,
+                channelingCharge: channelingChargeValue,
+                cartItems: cart,
+                cartTotal,
+                totalAmount,
+                cashReceived: cashAmount,
+                balance: balance,
+            });
+    
+            // Continue updating stock as before...
             for (const item of cart) {
                 const drugRef = doc(db, 'drugs', item.id);
-
-                // Get the current drug data
                 const drugSnapshot = await getDocs(collection(db, 'drugs'));
-                const currentDrug = drugSnapshot.docs
-                    .find(doc => doc.id === item.id)?.data();
-
+                const currentDrug = drugSnapshot.docs.find(doc => doc.id === item.id)?.data();
+    
                 if (currentDrug) {
-                    // Update the quantity in the database
                     await updateDoc(drugRef, {
                         quantity: currentDrug.quantity - item.quantity
                     });
                 }
             }
-
-            // Then handle the printing
+    
+            // Print in new tab
             const billContent = document.getElementById('bill-section').innerHTML;
-            const originalContent = document.body.innerHTML;
-
-            document.body.innerHTML = billContent;
-            window.print();
-            document.body.innerHTML = originalContent;
-
-            // Show success message
-            alert('Sale completed successfully!');
-
-            // Reload the page to refresh the drug list
-            window.location.reload();
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Print Bill</title></head>
+                <body onload="window.print(); window.close();">
+                    ${billContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+    
+            // Reset UI (don't reset doctor)
+            const drugsCollection = collection(db, 'drugs');
+            const drugSnapshot = await getDocs(drugsCollection);
+            const drugList = drugSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setDrugs(drugList);
+    
+            setCart([]);
+            setSelectedDrug(null);
+            setCashAmount(0);
+            setBalance(0);
+            setShowModal(false);
+            alert('Sale completed and saved successfully!');
         } catch (error) {
-            console.error('Error updating database:', error);
-            alert('Error completing sale. Please try again.');
-            setIsPrinting(false); // Stop loading on error
+            console.error('Error during sale:', error);
+            alert('Failed to complete sale. Please try again.');
+        } finally {
+            setIsPrinting(false);
         }
     };
 
