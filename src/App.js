@@ -12,6 +12,7 @@ import IndoorPharmacy from './components/cashier/IndoorPharmacy';
 import AdminAction from './components/AdminAction';
 import OutdoorPharmacy from './components/cashier/OutdoorPharmacy';
 import Investigation from './components/cashier/Investigation';
+import Dressing from "./components/cashier/Dressing";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/admin-action" element={<AdminAction />} />
         <Route path="/outdoor-pharmacy" element={<OutdoorPharmacy />} />
         <Route path="/investigation" element={<Investigation />} />
+        <Route path="/dressing" element={<Dressing />} />
       </Routes>
     </Router>
   );

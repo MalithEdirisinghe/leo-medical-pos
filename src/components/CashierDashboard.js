@@ -38,7 +38,7 @@ const CashierDashboard = () => {
                 navigate('/investigation');
                 break;
             case 'dressing':
-                navigate('/admin-dressing');
+                navigate('/dressing');
                 break;
             case 'view-income':
                 break;

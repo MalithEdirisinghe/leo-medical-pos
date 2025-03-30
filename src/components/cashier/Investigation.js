@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../../firebaseConfig';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import '../../css/InvestigationAdmin.css';
-import Header from '../Header';
+import qz from 'qz-tray';
+// import Header from '../Header';
 
 const generateSaleId = () => {
   return 'INV' + Math.floor(100000 + Math.random() * 900000);
@@ -21,6 +22,10 @@ const Investigation = () => {
   const [balance, setBalance] = useState(0);
   const saleIdRef = useRef(generateSaleId());
   const [isLoading, setIsLoading] = useState(false);
+  const [negativeBalanceSales, setNegativeBalanceSales] = useState([]);
+  const [negativeSearch, setNegativeSearch] = useState('');
+  const [settlingSaleId, setSettlingSaleId] = useState('');
+  const cashierName = localStorage.getItem('cashierName') || 'Unknown';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +36,25 @@ const Investigation = () => {
       setResults(data);
     };
     fetchData();
+    qz.websocket.connect().catch((err) => console.error("QZ Errors:", err));
+  }, []);
+
+  useEffect(() => {
+    if (!qz.websocket.isActive()) {
+      qz.security.setCertificatePromise(() => Promise.resolve(""));
+      qz.security.setSignaturePromise(() => Promise.resolve(""));
+      qz.websocket.connect().then(() => console.log("QZ Connected"));
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchNegativeSales = async () => {
+      const salesSnapshot = await getDocs(collection(db, 'investigationSales'));
+      const allSales = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = allSales.filter(sale => sale.balance < 0);
+      setNegativeBalanceSales(filtered);
+    };
+    fetchNegativeSales();
   }, []);
 
   useEffect(() => {
@@ -70,59 +94,167 @@ const Investigation = () => {
   };
 
   const handlePrintAndSave = async () => {
-    if (isLoading) return; // ✅ Prevent multiple clicks
-  
+    if (isLoading) return;
+
     try {
       setIsLoading(true);
+
       const saleId = saleIdRef.current;
-  
+      const total = cart.reduce((t, i) => t + Number(i.price || 0), 0); // Fallback to 0
+      const parsedCart = cart.map(item => ({
+        ...item,
+        price: Number(item.price || 0),
+      }));
+
       const saleData = {
-        cartItems: cart,
+        cartItems: parsedCart,
         customerName,
         saleId,
+        total,
         cash: Number(cash),
         balance: Number(balance),
+        cashierName,
         timestamp: serverTimestamp()
       };
-  
-      await addDoc(collection(db, 'investigationSales'), saleData); // ✅ Save only ONCE
-  
-      const printContent = document.getElementById('bill-section').innerHTML;
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head><title>Print Invoice</title></head>
-          <body onload="window.print(); window.close();">
-            ${printContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-  
+
+      console.log("💾 Saving sale:", saleData);
+      await addDoc(collection(db, 'investigationSales'), saleData);
+
+      // ⏸️ Print only if cart is valid
+      if (!parsedCart.length) {
+        throw new Error("Cart is empty, nothing to print.");
+      }
+
+      // 🖨️ Prepare thermal print content
+      const config = qz.configs.create("XP-58 (copy 1)");
+
+      // const data = [
+      //   "\x1B\x21\x08",
+      //   "     LEO Medical POS\n",
+      //   "  --- Investigation Bill ---\n",
+      //   `Sale ID    : ${saleId}\n`,
+      //   `Patient    : ${customerName || "N/A"}\n`,
+      //   `Cashier    : ${cashierName}\n`,
+      //   "-----------------------------\n",
+      //   ...cart
+      //     .filter(item => item && item.name && item.price)
+      //     .map(item => `${item.name} (${item.percentage || "-"})\nRs. ${item.price}\n`),
+      //   "-----------------------------\n",
+      //   `Total      : Rs. ${total}\n`,
+      //   `Cash       : Rs. ${cash}\n`,
+      //   `Balance    : Rs. ${balance}\n`,
+      //   "-----------------------------\n",
+      //   " Thank you and get well soon!\n\n\n",
+      //   "\x1D\x56\x01"
+      // ];
+      const data = [
+        "\x1B\x45\x01",        // Bold ON
+        "\x1D\x21\x11",        // Double width + height
+        " LEO Medical POS\n\n",
+        "\x1D\x21\x00",        // Back to normal size
+        "\x1B\x45\x01",
+
+        "  --- Investigation Bill ---\n",
+        "-----------------------------\n",
+        "\x1B\x45\x00",
+        `Sale ID    : ${saleId}\n`,
+        `Patient    : ${customerName || "N/A"}\n`,
+        `Cashier    : ${cashierName}\n`,
+        "-----------------------------\n",
+
+        ...cart.map(item => `${item.name}:   Rs.${item.price}\n`),
+
+        "-----------------------------\n",
+        "\x1B\x45\x01", // Bold ON
+        `Cash       : Rs. ${cash}\n`,
+        `Total      : Rs. ${total}\n`,
+        `Balance    : Rs. ${balance}\n`,
+        "\x1B\x45\x00", // Bold OFF
+        "-----------------------------\n",
+        " Thank you and get well soon!\n\n\n",
+        "\x1D\x56\x01"
+      ];
+
+      console.log("🧾 Final Print Payload:", data);
+      console.log("🛒 Cart Debug:", cart);
+
+      await qz.print(config, data);
+
+      // ❌ Avoid using cart or any dynamic state directly after this line
+      const soldCount = cart.length; // ✅ Safe to store now
+
+      // 🧹 Reset UI
       setCart([]);
       setCustomerName('');
       setCash('');
       setBalance(0);
       setShowModal(false);
-      setMessage(`Checkout complete! ${cart.length} item(s) sold.`);
+
+      // 🛑 This might be failing if cart is already cleared
+      setMessage(`Checkout complete! ${soldCount} item(s) sold.`);
+
     } catch (error) {
-      console.error('Printing or saving failed:', error);
-      alert('Something went wrong while processing the invoice.');
+      console.error("❌ Print or Save Failed:", error);
+      alert("Failed to complete transaction.\n" + error.message);
     } finally {
-      setIsLoading(false); // 🧹 Reset loading
+      setIsLoading(false);
     }
-  };  
+  };
 
   const handleRemoveFromCart = (id) => {
     const updatedCart = cart.filter(item => item.id !== id);
     setCart(updatedCart);
   };
 
+  const handleSettleBalance = async (saleIdToSettle) => {
+    try {
+      setSettlingSaleId(saleIdToSettle);
+
+      const salesSnapshot = await getDocs(collection(db, 'investigationSales'));
+      const matchedDoc = salesSnapshot.docs.find(doc => doc.data().saleId === saleIdToSettle);
+
+      if (matchedDoc) {
+        const sale = matchedDoc.data();
+        const updatedCash = Number(sale.cash) + Math.abs(Number(sale.balance));
+
+        // 1. ✅ Update `investigationSales` doc
+        await updateDoc(doc(db, 'investigationSales', matchedDoc.id), {
+          balance: 0,
+          cash: updatedCash
+        });
+
+        // 2. ✅ Insert into `investigationSettle` collection
+        await addDoc(collection(db, 'investigationSettle'), {
+          saleId: sale.saleId,
+          customerName: sale.customerName,
+          settledAmount: Math.abs(Number(sale.balance)),
+          cashierName: localStorage.getItem('cashierName') || 'Unknown',
+          settledAt: serverTimestamp()
+        });
+
+        // 3. ✅ Refresh UI
+        const updatedSales = negativeBalanceSales.map(s =>
+          s.saleId === saleIdToSettle
+            ? { ...s, balance: 0, cash: updatedCash }
+            : s
+        );
+        setNegativeBalanceSales(updatedSales.filter(s => s.balance < 0));
+      } else {
+        alert('Sale ID not found!');
+      }
+    } catch (error) {
+      console.error('Error settling balance:', error);
+      alert('Failed to settle balance.');
+    } finally {
+      setSettlingSaleId('');
+    }
+  };
+
   const uniquePercentages = [...new Set(allInvestigations.map(item => item.percentage.toString()))];
 
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       <div className="investigation-container">
         <h2>Investigation Sales</h2>
 
@@ -141,76 +273,136 @@ const Investigation = () => {
           </select>
         </div>
 
-        <div className="main-layout">
-          <div className="table-box">
-            <h3>🧪 Investigations</h3>
-            <div className="scroll-area">
-              <table className="investigation-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Percentage</th>
-                    <th>Price</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td>{item.percentage}</td>
-                      <td>Rs.{item.price}</td>
-                      <td>
-                        <button onClick={() => handleAddToCart(item)}>Add to Cart</button>
-                      </td>
+        <div className="tables-scroll-container">
+          <div className="main-layout">
+            <div className="table-box">
+              <h3>🧪 Investigations</h3>
+              <div className="scroll-area">
+                <table className="investigation-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Percentage</th>
+                      <th>Price</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {results.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.percentage}</td>
+                        <td>Rs.{item.price}</td>
+                        <td>
+                          <button onClick={() => handleAddToCart(item)}>Add to Cart</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="table-box">
+              <h3>🛒 Cart</h3>
+              <div className="scroll-area">
+                <table className="investigation-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Percentage</th>
+                      <th>Price</th>
+                      <th>Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cart.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.percentage}</td>
+                        <td>Rs.{item.price}</td>
+                        <td>
+                          <button
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            className="cart-remove-btn"
+                          >
+                            ❌ Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="cart-total">
+                  Total: <strong>Rs.{cart.reduce((total, item) => total + Number(item.price), 0)}</strong>
+                </p>
+                <div className="checkout-box">
+                  <input
+                    type="text"
+                    placeholder="Enter Customer Name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                  />
+                  <button onClick={handleCheckout}>Checkout</button>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="table-box">
-            <h3>🛒 Cart</h3>
-            <div className="scroll-area">
-              <table className="investigation-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Percentage</th>
-                    <th>Price</th>
-                    <th>Remove</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cart.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td>{item.percentage}</td>
-                      <td>Rs.{item.price}</td>
-                      <td>
-                        <button
-                          onClick={() => handleRemoveFromCart(item.id)}
-                          className="cart-remove-btn"
-                        >
-                          ❌ Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="cart-total">
-                Total: <strong>Rs.{cart.reduce((total, item) => total + Number(item.price), 0)}</strong>
-              </p>
-              <div className="checkout-box">
+          <div className="negative-balance-container">
+            <div className="table-box">
+              <h3>📉 Negative Balance Sales</h3>
+              <div className="negative-search-wrapper">
                 <input
                   type="text"
-                  placeholder="Enter Customer Name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Search by Patient or Sale ID"
+                  value={negativeSearch}
+                  onChange={(e) => setNegativeSearch(e.target.value)}
+                  className="negative-search"
                 />
-                <button onClick={handleCheckout}>Checkout</button>
+              </div>
+              <div className="scroll-area">
+                <table className="investigation-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Sale ID</th>
+                      <th>Price</th>
+                      <th>Cash</th>
+                      <th>Balance</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {negativeBalanceSales
+                      .filter((sale) =>
+                        sale.customerName.toLowerCase().includes(negativeSearch.toLowerCase()) ||
+                        sale.saleId.toLowerCase().includes(negativeSearch.toLowerCase())
+                      )
+                      .map((sale, idx) => (
+                        <tr key={idx}>
+                          <td>{sale.customerName}</td>
+                          <td>{sale.saleId}</td>
+                          <td>Rs.{sale.total}</td>
+                          <td>Rs.{sale.cash}</td>
+                          <td style={{ color: 'red' }}>Rs.{sale.balance}</td>
+                          <td>
+                            <button
+                              className="settle-btn"
+                              onClick={() => handleSettleBalance(sale.saleId)}
+                              disabled={settlingSaleId === sale.saleId}
+                              style={{ opacity: settlingSaleId === sale.saleId ? 0.5 : 1 }}
+                            >
+                              {settlingSaleId === sale.saleId ? (
+                                <div className="spinners" style={{ width: '16px', height: '16px' }}></div>
+                              ) : (
+                                'Settle'
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -229,7 +421,7 @@ const Investigation = () => {
             </div>
 
             <div className="modal-row">
-              <span>Customer Name:</span>
+              <span>Patient Name:</span>
               <span>{customerName}</span>
             </div>
 
@@ -248,7 +440,6 @@ const Investigation = () => {
 
             <div className="modal-row">
               <span>Balance:</span>
-              {/* <span>Rs.{balance >= 0 ? balance : 0}</span> */}
               <span>Rs.{balance}</span>
             </div>
             <div className="modal-buttons">
@@ -277,34 +468,6 @@ const Investigation = () => {
           </div>
         </div>
       )}
-
-      {/* Hidden printable bill for thermal printing */}
-      <div id="bill-section" style={{ display: 'none' }}>
-        <pre style={{
-          fontFamily: 'Courier, monospace',
-          fontSize: '12px',
-          width: '3in',
-          margin: '0 auto',
-          lineHeight: '1.5',
-          whiteSpace: 'pre-wrap',
-          textAlign: 'left'
-        }}>
-          {`LEO Medical POS
-  Investigation Bill
-  Sale ID      : ${saleIdRef.current}
-  Patient     : ${customerName}
-  -------------------------------
-  ${cart.map(item => (
-            `${item.name.padEnd(15)} ${item.percentage} Rs.${item.price}`
-          )).join('\n')}
-  -------------------------------
-  Total Amount : Rs. ${cart.reduce((t, i) => t + Number(i.price), 0)}
-  Cash Amount  : Rs. ${cash}
-  Balance      : Rs. ${balance}
-  -------------------------------
-  Thank you!`}
-        </pre>
-      </div>
     </div>
   );
 };
