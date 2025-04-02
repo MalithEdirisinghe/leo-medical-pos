@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, db, doc, updateDoc, addDoc } from '../../firebaseConfig';
-import '../../css/IndoorPharmacy.css'; // We can reuse the same CSS
+import '../../css/IndoorPharmacy.css';
+import qz from 'qz-tray';
+import { query, where } from "firebase/firestore";
+import { useNavigate } from 'react-router-dom';
+
+const generateUniqueSaleId = async () => {
+    let saleId;
+    let exists = true;
+
+    while (exists) {
+        saleId = 'OUT-' + Math.floor(100000 + Math.random() * 900000);
+
+        const q = query(collection(db, "outdoorSales"), where("saleId", "==", saleId));
+        const snapshot = await getDocs(q);
+        exists = !snapshot.empty;
+    }
+
+    return saleId;
+};
+
 
 const OutdoorPharmacy = () => {
     // State variables
+    const navigate = useNavigate();
     const [drugs, setDrugs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -13,6 +33,8 @@ const OutdoorPharmacy = () => {
     const [cashAmount, setCashAmount] = useState(0);
     const [balance, setBalance] = useState(0);
     const [isPrinting, setIsPrinting] = useState(false);
+    const cashierName = localStorage.getItem("cashierName") || "Unknown";
+    let isQZConnecting = false;
 
     // Fetch drugs from Firebase
     useEffect(() => {
@@ -30,7 +52,26 @@ const OutdoorPharmacy = () => {
         };
 
         fetchDrugs();
+        qz.websocket.connect().catch((err) => console.error("QZ Errors:", err));
     }, []);
+
+    const connectToQZ = async () => {
+        if (qz.websocket.isActive() || isQZConnecting) return;
+
+        qz.security.setCertificatePromise(() => Promise.resolve(""));
+        qz.security.setSignaturePromise(() => Promise.resolve(""));
+
+        try {
+            isQZConnecting = true;
+            await qz.websocket.connect();
+            console.log("✅ QZ Tray connected");
+        } catch (err) {
+            console.error("❌ Failed to connect to QZ Tray:", err);
+            throw err;
+        } finally {
+            isQZConnecting = false;
+        }
+    };
 
     // Filter drugs based on search query
     const filteredDrugs = drugs.filter(drug =>
@@ -108,32 +149,25 @@ const OutdoorPharmacy = () => {
     };
 
     const handlePrintBill = async () => {
+        const saleId = await generateUniqueSaleId();
         setIsPrinting(true);
         try {
-            // 1. Update each drug's quantity in Firestore
+            // Update Firestore
             for (const item of cart) {
                 const drugRef = doc(db, 'drugs', item.id);
-
-                // Get the latest snapshot (not using local state only)
                 const drugSnapshot = await getDocs(collection(db, 'drugs'));
                 const currentDrug = drugSnapshot.docs.find(doc => doc.id === item.id)?.data();
-
                 if (currentDrug) {
                     const updatedQuantity = currentDrug.quantity - item.quantity;
-
-                    // Protect against negative values
                     if (updatedQuantity >= 0) {
-                        await updateDoc(drugRef, {
-                            quantity: updatedQuantity
-                        });
+                        await updateDoc(drugRef, { quantity: updatedQuantity });
                     }
                 }
             }
 
-            // 2. Save sale to Firestore
             const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
             await addDoc(collection(db, 'outdoorSales'), {
+                saleId,
                 timestamp: new Date(),
                 cashier: localStorage.getItem('cashierName') || 'Unknown',
                 cartItems: cart,
@@ -142,43 +176,74 @@ const OutdoorPharmacy = () => {
                 balance: balance,
             });
 
-            // 3. Print in new tab
-            const billContent = document.getElementById('bill-section').innerHTML;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                <head><title>Print Bill</title></head>
-                <body onload="window.print(); window.close();">
-                    ${billContent}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
+            // QZ Tray print logic
+            await connectToQZ();
+            const now = new Date();
+            const formattedDateTime = now.toLocaleString();
+            const config = qz.configs.create("XP-58 (copy 1)"); // Update printer name
 
-            // 4. Reset UI
+            const data = [
+                "\x1B\x45\x01",            // Bold on
+                "\x1D\x21\x11",            // Double size
+                "LEO Medical POS\n\n",
+                "\x1D\x21\x00",            // Normal
+                "  --- Outdoor Pharmacy Bill ---\n",
+                "--------------------------------\n",
+                "\x1B\x45\x00",            // Bold off
+                `Sale ID   : ${saleId}\n`,
+                `Cashier   : ${cashierName}\n`,
+                "--------------------------------\n",
+                "Item           Qty Price Total\n",
+                "--------------------------------\n",
+                ...cart.map(item => {
+                    const shortName = item.name.length > 13 ? item.name.slice(0, 13) + '…' : item.name;
+                    const qty = item.quantity.toString().padStart(3, ' ');
+                    const price = item.price.toString().padStart(5, ' ');
+                    const total = (item.quantity * item.price).toString().padStart(5, ' ');
+                    return `${shortName.padEnd(14)} ${qty} ${price} ${total}\n`;
+                }),
+                "--------------------------------\n",
+                `Total     : Rs.${cartTotal.toFixed(2)}\n`,
+                `Cash      : Rs.${cashAmount.toFixed(2)}\n`,
+                `Balance   : Rs.${balance.toFixed(2)}\n`,
+                "--------------------------------\n",
+                `Date : ${formattedDateTime}\n`,
+                "\nThank you for your purchase!\n\n\n",
+                "\x1D\x56\x01"             // Full cut
+            ];
+
+            await qz.print(config, data);
+
+            // UI reset
             setCart([]);
             setSelectedDrug(null);
             setCashAmount(0);
             setBalance(0);
             setShowModal(false);
 
-            // Re-fetch updated drug list
+            // Refresh drug list
             const drugsCollection = collection(db, 'drugs');
             const drugSnapshot = await getDocs(drugsCollection);
             const drugList = drugSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setDrugs(drugList);
 
-            alert('Sale completed and saved to database.');
+            alert('Sale completed and printed.');
         } catch (error) {
-            console.error('Error completing sale:', error);
-            alert('Something went wrong while processing the sale.');
+            console.error('❌ Error during sale/print:', error);
+            alert('Failed to complete sale.\n' + error.message);
         } finally {
-            setIsPrinting(false); // ✅ Stop spinner
+            setIsPrinting(false);
         }
     };
 
     return (
         <div className="indoor-pharmacy">
+            <button
+                className="back-button"
+                onClick={() => navigate('/cashier-dashboard')}
+            >
+                ← Back
+            </button>
             <h1>Outdoor Pharmacy Drugs</h1>
 
             {/* Search Bar */}
@@ -379,32 +444,6 @@ const OutdoorPharmacy = () => {
                     </div>
                 </div>
             )}
-
-            {/* Bill Section (Hidden) */}
-            <div id="bill-section" style={{ display: 'none' }}>
-                <pre style={{
-                    fontFamily: 'Courier, monospace',
-                    fontSize: '12px',
-                    width: '3in',
-                    margin: '0 auto',
-                    lineHeight: '1.5',
-                    whiteSpace: 'pre-wrap',
-                    textAlign: 'left'
-                }}>
-                    LEO Medical POS<br></br>
-                    Pharmacy Bill<br></br>
-                    --------------------------------<br></br>
-                    {cart.map(item =>
-                        `${item.name.padEnd(15)} ${item.quantity} x ${item.price.toString().padEnd(5)} = ${(item.quantity * item.price).toString().padEnd(5)}`
-                    ).join("\n")}<br></br>
-                    --------------------------------<br></br>
-                    Total Amount: Rs. {cart.reduce((total, item) => total + (item.price * item.quantity), 0)}<br></br>
-                    Cash Amount: Rs. {cashAmount}<br></br>
-                    Balance:     Rs. {balance}<br></br>
-                    --------------------------------<br></br>
-                    Thank you for your purchase!
-                </pre>
-            </div>
         </div>
     );
 };

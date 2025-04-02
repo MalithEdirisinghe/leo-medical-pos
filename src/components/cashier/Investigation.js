@@ -1,12 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../firebaseConfig';
 import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import '../../css/InvestigationAdmin.css';
 import qz from 'qz-tray';
-// import Header from '../Header';
 
-const generateSaleId = () => {
-  return 'INV' + Math.floor(100000 + Math.random() * 900000);
+const generateUniqueSaleId = async () => {
+  let isUnique = false;
+  let newSaleId = "";
+
+  const salesSnapshot = await getDocs(collection(db, 'investigationSales'));
+  const existingSaleIds = salesSnapshot.docs.map(doc => doc.data().saleId);
+
+  while (!isUnique) {
+    const candidateId = 'INV-' + Math.floor(100000 + Math.random() * 900000);
+    if (!existingSaleIds.includes(candidateId)) {
+      newSaleId = candidateId;
+      isUnique = true;
+    }
+  }
+
+  return newSaleId;
 };
 
 const Investigation = () => {
@@ -20,7 +33,6 @@ const Investigation = () => {
   const [showModal, setShowModal] = useState(false);
   const [cash, setCash] = useState('');
   const [balance, setBalance] = useState(0);
-  const saleIdRef = useRef(generateSaleId());
   const [isLoading, setIsLoading] = useState(false);
   const [negativeBalanceSales, setNegativeBalanceSales] = useState([]);
   const [negativeSearch, setNegativeSearch] = useState('');
@@ -99,7 +111,8 @@ const Investigation = () => {
     try {
       setIsLoading(true);
 
-      const saleId = saleIdRef.current;
+      // const saleId = saleIdRef.current;
+      const saleId = await generateUniqueSaleId();
       const total = cart.reduce((t, i) => t + Number(i.price || 0), 0); // Fallback to 0
       const parsedCart = cart.map(item => ({
         ...item,
@@ -127,30 +140,13 @@ const Investigation = () => {
 
       // 🖨️ Prepare thermal print content
       const config = qz.configs.create("XP-58 (copy 1)");
+      const now = new Date();
+      const formattedDateTime = now.toLocaleString();
 
-      // const data = [
-      //   "\x1B\x21\x08",
-      //   "     LEO Medical POS\n",
-      //   "  --- Investigation Bill ---\n",
-      //   `Sale ID    : ${saleId}\n`,
-      //   `Patient    : ${customerName || "N/A"}\n`,
-      //   `Cashier    : ${cashierName}\n`,
-      //   "-----------------------------\n",
-      //   ...cart
-      //     .filter(item => item && item.name && item.price)
-      //     .map(item => `${item.name} (${item.percentage || "-"})\nRs. ${item.price}\n`),
-      //   "-----------------------------\n",
-      //   `Total      : Rs. ${total}\n`,
-      //   `Cash       : Rs. ${cash}\n`,
-      //   `Balance    : Rs. ${balance}\n`,
-      //   "-----------------------------\n",
-      //   " Thank you and get well soon!\n\n\n",
-      //   "\x1D\x56\x01"
-      // ];
       const data = [
         "\x1B\x45\x01",        // Bold ON
         "\x1D\x21\x11",        // Double width + height
-        " LEO Medical POS\n\n",
+        "LEO Medical POS\n\n",
         "\x1D\x21\x00",        // Back to normal size
         "\x1B\x45\x01",
 
@@ -171,6 +167,7 @@ const Investigation = () => {
         `Balance    : Rs. ${balance}\n`,
         "\x1B\x45\x00", // Bold OFF
         "-----------------------------\n",
+        `Date : ${formattedDateTime}\n\n`,
         " Thank you and get well soon!\n\n\n",
         "\x1D\x56\x01"
       ];

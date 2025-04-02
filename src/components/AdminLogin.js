@@ -8,17 +8,16 @@ const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // ✅ new state
   const navigate = useNavigate();
 
-  // Check authentication status on component mount
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated') || sessionStorage.getItem('adminAuthenticated');
     if (isAuthenticated) {
       navigate('/admin', { replace: true });
     }
 
-    // Prevent browser back/forward navigation
-    const preventNavigation = (e) => {
+    const preventNavigation = () => {
       window.history.pushState(null, '', window.location.href);
     };
 
@@ -33,6 +32,7 @@ const AdminLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true); // ✅ start spinner
 
     try {
       const adminDocRef = doc(db, 'users', 'admin');
@@ -42,9 +42,7 @@ const AdminLogin = () => {
         const { username: storedUsername, password: storedPassword } = adminDoc.data();
 
         if (username === storedUsername && password === storedPassword) {
-          // Set authentication status in localStorage or sessionStorage
           localStorage.setItem('adminAuthenticated', 'true');
-          // Navigate to AdminScreen and replace the history
           navigate('/admin', { replace: true });
         } else {
           setError('Invalid credentials. Please try again.');
@@ -54,6 +52,8 @@ const AdminLogin = () => {
       }
     } catch (error) {
       setError('Login failed: ' + error.message);
+    } finally {
+      setLoading(false); // ✅ stop spinner
     }
   };
 
@@ -69,6 +69,7 @@ const AdminLogin = () => {
             onChange={(e) => setUsername(e.target.value)}
             required
             className="form-input"
+            disabled={loading}
           />
         </div>
         <div className="form-group">
@@ -79,10 +80,24 @@ const AdminLogin = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             className="form-input"
+            disabled={loading}
           />
         </div>
         {error && <p className="error-text">{error}</p>}
-        <button type="submit" className="login-button">Login</button>
+        <button type="submit" className="login-button" disabled={loading}>
+          {loading && <div className="login-spinner" />}
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+
+        <button
+          type="button"
+          className="login-button"
+          onClick={() => navigate('/')}
+          disabled={loading}
+          style={{ marginTop: '10px' }}
+        >
+          Home
+        </button>
       </form>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
 import qz from "qz-tray";
 import {
@@ -9,8 +9,21 @@ import {
 } from "firebase/firestore";
 import "../../css/Dressing.css";
 
-const generateSaleId = () => {
-  return "DRS" + Math.floor(100000 + Math.random() * 900000);
+const generateUniqueSaleId = async () => {
+  const salesSnapshot = await getDocs(collection(db, "dressingSales"));
+  const existingIds = new Set(salesSnapshot.docs.map(doc => doc.data().saleId));
+
+  let uniqueId = "";
+  let isUnique = false;
+
+  while (!isUnique) {
+    uniqueId = "DRS-" + Math.floor(100000 + Math.random() * 900000);
+    if (!existingIds.has(uniqueId)) {
+      isUnique = true;
+    }
+  }
+
+  return uniqueId;
 };
 
 const Dressing = () => {
@@ -26,7 +39,6 @@ const Dressing = () => {
   const [showModal, setShowModal] = useState(false);
   const [cash, setCash] = useState("");
   const [balance, setBalance] = useState(null);
-  const saleIdRef = useRef(generateSaleId());
   const [isLoading, setIsLoading] = useState(false);
 
   const sutureOptions = [
@@ -84,7 +96,6 @@ const Dressing = () => {
   };
 
   const handlePrintAndSave = async () => {
-    // Step 1: Validate
     if (
       !patientName ||
       !selectedDoctorId ||
@@ -98,13 +109,15 @@ const Dressing = () => {
       alert("Please fill all required fields correctly.");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
-      // Step 2: Prepare sale data
       const doctorName = doctorList.find((d) => d.id === selectedDoctorId)?.name || "Unknown";
-      const saleId = saleIdRef.current;
+  
+      // 🔒 Generate safe unique sale ID
+      const saleId = await generateUniqueSaleId();
+  
       const saleData = {
         saleId,
         patientName,
@@ -119,7 +132,7 @@ const Dressing = () => {
         cash: parseFloat(cash),
         balance: parseFloat(balance),
         createdAt: Timestamp.now(),
-      };
+      };  
 
       console.log("🧾 Sale Data to Save:", saleData);
 
@@ -128,22 +141,32 @@ const Dressing = () => {
 
       // Step 4: Prepare thermal receipt
       const config = qz.configs.create("XP-58 (copy 1)"); // Replace with actual printer name
+      const now = new Date();
+      const formattedDateTime = now.toLocaleString();
+
       const data = [
-        "\x1B\x21\x08", // Bold ON
-        "      LEO Medical POS\n",
-        "     --- Dressing Bill ---\n",
+        "\x1B\x45\x01",        // Bold ON
+        "\x1D\x21\x11",        // Double width + height
+        "LEO Medical POS\n\n",
+        "\x1D\x21\x00",        // Back to normal size
+        "\x1B\x45\x01",
+
+        "  --- Dressing Bill ---\n",
+        "-----------------------------\n",
+        "\x1B\x45\x00",
         `Sale ID     : ${saleId}\n`,
         `Patient     : ${patientName}\n`,
         `Doctor      : ${doctorName}\n`,
         `Cashier     : ${cashierName}\n`,
         `Dressing    : ${dressingType}\n`,
         "-----------------------------\n",
-        `Total       : Rs. ${dressingCharge}\n`,
         `Cash        : Rs. ${cash}\n`,
+        `Total       : Rs. ${dressingCharge}\n`,
         `Balance     : Rs. ${balance}\n`,
         "-----------------------------\n",
+        `Date : ${formattedDateTime}\n\n`,
         "  Thank you and get well soon\n\n\n",
-        "\x1D\x56\x01" // Paper cut
+        "\x1D\x56\x01"
       ];
 
       // Step 5: Print

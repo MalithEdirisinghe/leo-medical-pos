@@ -545,3 +545,22 @@
     opacity: 0.8;
     cursor: wait;
 } 
+.back-button {
+    position: fixed;
+    top: 30px;
+    left: 45px;
+    background-color: #f44336 !important; /* 🔧 override green */
+    color: white !important;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 9999;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #d32f2f !important;
+}

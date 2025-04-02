@@ -5,15 +5,14 @@ import qz from 'qz-tray';
 import { query, where } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 
-
 const generateUniqueSaleId = async () => {
     let saleId;
     let exists = true;
 
     while (exists) {
-        saleId = 'IN-' + Math.floor(100000 + Math.random() * 900000);
+        saleId = 'LOY-' + Math.floor(100000 + Math.random() * 900000);
 
-        const q = query(collection(db, "indoorSales"), where("saleId", "==", saleId));
+        const q = query(collection(db, "loyaltyIndoorSales"), where("saleId", "==", saleId));
         const snapshot = await getDocs(q);
         exists = !snapshot.empty;
     }
@@ -22,7 +21,7 @@ const generateUniqueSaleId = async () => {
 };
 
 
-const IndoorPharmacy = () => {
+const LoyaltyPharmacy = () => {
     // State variables
     const navigate = useNavigate();
     const [drugs, setDrugs] = useState([]);
@@ -37,7 +36,7 @@ const IndoorPharmacy = () => {
     const [doctorCharges, setDoctorCharges] = useState([]);
     const [channelingCharges, setChannelingCharges] = useState([]);
     const [showModal, setShowModal] = useState(false); // To toggle the modal visibility
-    const [cashAmount, setCashAmount] = useState(''); // Cash entered by the cashier
+    const [cashAmount, setCashAmount] = useState('');
     const [balance, setBalance] = useState(0);
     const [isPrinting, setIsPrinting] = useState(false);
     const cashierName = localStorage.getItem("cashierName") || "Unknown";
@@ -227,14 +226,18 @@ const IndoorPharmacy = () => {
     };
 
     const handleCashAmountChange = (e) => {
-        const enteredCash = parseFloat(e.target.value);
+        const enteredCash = parseFloat(e.target.value) || 0;
         setCashAmount(enteredCash);
 
-        const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-        const doctorCharge = doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0;
-        const channelingCharge = channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0;
+        const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-        const totalWithCharges = totalAmount + parseFloat(doctorCharge) + parseFloat(channelingCharge);
+        const originalDoctorCharge = parseFloat(doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0);
+        const originalChannelingCharge = parseFloat(channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0);
+
+        const discountedDoctorCharge = Math.max(originalDoctorCharge - 100, 0);
+        const discountedChannelingCharge = Math.max(originalChannelingCharge - 100, 0);
+
+        const totalWithCharges = cartTotal + discountedDoctorCharge + discountedChannelingCharge;
         setBalance(enteredCash - totalWithCharges);
     };
 
@@ -246,14 +249,20 @@ const IndoorPharmacy = () => {
         const saleId = await generateUniqueSaleId();
         setIsPrinting(true);
         try {
-            // Save sale to Firestore
+            // Get selected doctor and charge values
             const doctorObj = doctors.find(doc => doc.id === selectedDoctor);
-            const doctorChargeValue = parseFloat(doctorCharges.find(c => c.id === selectedDoctorCharge)?.charge || 0);
-            const channelingChargeValue = parseFloat(channelingCharges.find(c => c.id === selectedChannelingCharge)?.charge || 0);
+            const originalDoctorCharge = parseFloat(doctorCharges.find(c => c.id === selectedDoctorCharge)?.charge || 0);
+            const originalChannelingCharge = parseFloat(channelingCharges.find(c => c.id === selectedChannelingCharge)?.charge || 0);
+
+            // Apply Rs.100 discount
+            const doctorChargeValue = Math.max(originalDoctorCharge - 100, 0);
+            const channelingChargeValue = Math.max(originalChannelingCharge - 100, 0);
+
             const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const totalAmount = cartTotal + doctorChargeValue + channelingChargeValue;
 
-            await addDoc(collection(db, "indoorSales"), {
+            // Save sale to Firestore (loyalty collection)
+            await addDoc(collection(db, "loyaltyIndoorSales"), {
                 saleId,
                 timestamp: new Date(),
                 cashier: cashierName || "Unknown",
@@ -267,7 +276,7 @@ const IndoorPharmacy = () => {
                 balance: balance,
             });
 
-            // Continue updating stock as before...
+            // Update stock
             for (const item of cart) {
                 const drugRef = doc(db, 'drugs', item.id);
                 const drugSnapshot = await getDocs(collection(db, 'drugs'));
@@ -280,47 +289,39 @@ const IndoorPharmacy = () => {
                 }
             }
 
-            // Print in new tab
+            // Print the receipt
             const now = new Date();
             const formattedDateTime = now.toLocaleString();
-
-            const totalCart = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-            const doctorCharge = parseFloat(
-                doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0
-            );
-            const channelingCharge = parseFloat(
-                channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0
-            );
-            const grandTotal = totalCart + doctorCharge + channelingCharge;
+            const grandTotal = cartTotal + doctorChargeValue + channelingChargeValue;
 
             await connectToQZ();
 
-            const config = qz.configs.create("XP-58 (copy 1)"); // ✅ define the printer config here
+            const config = qz.configs.create("XP-58 (copy 1)");
 
             const data = [
                 "\x1B\x45\x01",
                 "\x1D\x21\x11",
                 "LEO DOCTOR HOUSE\n\n",
                 "\x1D\x21\x00",
-                "         Pharmacy Bill\n",
+                "   Loyalty Pharmacy Bill\n",
                 "------------------------------\n",
                 "\x1B\x45\x00",
                 `Sale ID          : ${saleId}\n`,
                 `Cashier          : ${cashierName}\n`,
                 `Doctor           : ${doctorObj?.name || "Unknown"}\n`,
                 "------------------------------\n",
-                `Total Amount      : Rs. ${grandTotal}\n`,
-                `Cash Amount       : Rs. ${cashAmount}\n`,
-                `Balance           : Rs. ${balance}\n`,
+                `Total Amount     : Rs. ${cartTotal + originalDoctorCharge + originalChannelingCharge}\n`,
+                `Payable Amount   : Rs. ${grandTotal}\n`,
+                `Cash Received    : Rs. ${cashAmount}\n`,
+                `Balance          : Rs. ${balance}\n`,
                 "------------------------------\n",
                 `Date : ${formattedDateTime}\n`,
                 " \n  Thank you! Get well soon\n\n\n",
                 "\x1D\x56\x01"
             ];
-            await qz.print(config, data); // ✅ use it here
+            await qz.print(config, data);
 
-
-            // Reset UI (don't reset doctor)
+            // Reset UI
             const drugsCollection = collection(db, 'drugs');
             const drugSnapshot = await getDocs(drugsCollection);
             const drugList = drugSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -342,14 +343,7 @@ const IndoorPharmacy = () => {
 
     return (
         <div className="indoor-pharmacy">
-            <button
-                className="back-button"
-                onClick={() => navigate('/cashier-dashboard')}
-            >
-                ← Back
-            </button>
-
-            <h1>Indoor Pharmacy Drugs</h1>
+            <h1>Loyalty Indoor Pharmacy Drugs</h1>
 
             {/* Doctor Selection Dropdown */}
             <div className="dropdown-container" style={{ marginTop: '10px', marginLeft: '100px' }}>
@@ -532,11 +526,12 @@ const IndoorPharmacy = () => {
                         </button>
                     </div>
                     <button
-                        onClick={() => navigate('/loyalty-pharmacy')}
+                        onClick={() => navigate('/indoor-pharmacy')}
                         style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', borderRadius: '5px', border: 'none', cursor: 'pointer' }}
                     >
-                        Loyalty
+                        Indoor
                     </button>
+
                 </div>
             </div>
 
@@ -557,7 +552,7 @@ const IndoorPharmacy = () => {
                         <div>
                             <label>Doctor Charge: </label>
                             <span>
-                                Rs. {doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0}
+                                Rs. {Math.max((doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0) - 100, 0)} (Discounted)
                             </span>
                         </div>
 
@@ -565,7 +560,7 @@ const IndoorPharmacy = () => {
                         <div>
                             <label>Channeling Charge: </label>
                             <span>
-                                Rs. {channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0}
+                                Rs. {Math.max((channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0) - 100, 0)} (Discounted)
                             </span>
                         </div>
 
@@ -589,6 +584,20 @@ const IndoorPharmacy = () => {
                                 onChange={handleCashAmountChange}
                                 placeholder="Enter cash amount"
                             />
+                        </div>
+
+                        {/* Total Payable (After Discount) */}
+                        <div style={{ marginTop: '10px' }}>
+                            <label><strong>Total Payable (After Discount):</strong> </label>
+                            <span>
+                                <strong>
+                                    Rs. {
+                                        cart.reduce((total, item) => total + (item.price * item.quantity), 0) +
+                                        Math.max((doctorCharges.find(charge => charge.id === selectedDoctorCharge)?.charge || 0) - 100, 0) +
+                                        Math.max((channelingCharges.find(charge => charge.id === selectedChannelingCharge)?.charge || 0) - 100, 0)
+                                    }
+                                </strong>
+                            </span>
                         </div>
 
                         {/* Balance */}
@@ -628,4 +637,4 @@ const IndoorPharmacy = () => {
     );
 };
 
-export default IndoorPharmacy;
+export default LoyaltyPharmacy;

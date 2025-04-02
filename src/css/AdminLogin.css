@@ -1,80 +1,118 @@
 /* AdminLogin.css */
 
+/* Container styling */
 .login-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: #f5f7fa;
-    border-radius: 8px;
-    padding: 40px;
-    max-width: 400px;
-    margin: 80px auto;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .login-title {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 20px;
-    font-family: 'Arial', sans-serif;
-  }
-  
-  .login-form {
-    width: 100%;
-  }
-  
-  .form-group {
-    margin-bottom: 15px;
-    text-align: left;
-  }
-  
-  label {
-    display: block;
-    font-size: 1rem;
-    color: #666;
-    margin-bottom: 5px;
-  }
-  
-  .form-input {
-    width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    border: 1px solid #ccd1d9;
-    border-radius: 5px;
-    transition: border-color 0.3s ease;
-  }
-  
-  .form-input:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0px 0px 5px rgba(52, 152, 219, 0.3);
-  }
-  
-  .error-text {
-    color: #e74c3c;
-    font-size: 0.9rem;
-    margin-top: -5px;
-    margin-bottom: 15px;
-  }
-  
-  .login-button {
-    width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    color: white;
-    background-color: #3498db;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-  
-  .login-button:hover {
-    background-color: #2980b9;
-  }
-  
-  .login-button:active {
-    transform: scale(0.98);
-  }
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  padding: 40px;
+  max-width: 400px;
+  margin: 80px auto;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Title styling */
+.login-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Form styling */
+.login-form {
+  width: 100%;
+}
+
+/* Form group styling */
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* Label styling */
+label {
+  display: block;
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+/* Input styling */
+.form-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccd1d9;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0px 0px 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Error message styling */
+.error-text {
+  color: #e74c3c;
+  font-size: 0.9rem;
+  margin-top: -5px;
+  margin-bottom: 15px;
+}
+
+/* Login button styling */
+.login-button {
+  width: 88%;
+  padding: 12px;
+  font-size: 1rem;
+  color: white;
+  background-color: #3498db;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-button {
+  color: #2980b9;
+  margin-top: 10%;
+}
+
+/* Hover and active effects */
+.login-button:hover {
+  background-color: #2980b9;
+}
+.login-button:active {
+  transform: scale(0.98);
+}
+
+/* Disabled button */
+.login-button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+/* Spinner inside the button */
+.login-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+/* Keyframes for spinning animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -41,6 +41,7 @@ const CashierDashboard = () => {
                 navigate('/dressing');
                 break;
             case 'view-income':
+                navigate('/view-income');
                 break;
             case 'logout':
                 localStorage.removeItem('cashierName');
