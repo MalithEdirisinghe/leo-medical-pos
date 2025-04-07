@@ -15,7 +15,7 @@ const AdminScreen = () => {
         navigate('/admin-investigation');
         break;
       case 'income':
-        navigate('/admin-investigation');
+        navigate('/view-income');
         break;
       case 'changeAdminCredentials':
         navigate('/change-admin-credentials');

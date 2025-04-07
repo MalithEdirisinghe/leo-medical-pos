@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';  // Import useNavigate for navigation
 import '../css/CashierDashboard.css';  // Ensure to import the CSS file
 import 'font-awesome/css/font-awesome.min.css';
-import PrinterSelector from "../components/PrinterSelector"; // adjust path as needed
+// import PrinterSelector from "../components/PrinterSelector"; 
 
 const CashierDashboard = () => {
-    const navigate = useNavigate();  // Initialize navigate function
+    const navigate = useNavigate();
     const [time, setTime] = useState('');
     const [cashierName, setCashierName] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,7 +79,7 @@ const CashierDashboard = () => {
                 <button onClick={() => handleButtonClick('dressing')}>Dressing</button>
                 <button onClick={() => handleButtonClick('view-income')}>View Income</button>
             </div>
-            <PrinterSelector />
+            {/* <PrinterSelector /> */}
 
             <div className="logout-button-container">
                 <button onClick={() => handleButtonClick('logout')}>Logout</button>

@@ -69,19 +69,23 @@ const LoyaltyPharmacy = () => {
 
     // Handle row click and set selected drug
     const handleRowClick = (drug) => {
-        setSelectedDrug({ ...drug, quantity: 1 }); // Default quantity to 1 for selected drug
+        setSelectedDrug({ ...drug, quantity: '0' }); // Default quantity to 1 for selected drug
     };
 
     // Handle quantity change
     const handleQuantityChange = (e) => {
-        const newQuantity = parseInt(e.target.value, 10);
-        if (newQuantity >= 0) {
-            setSelectedDrug((prevDrug) => ({
-                ...prevDrug,
-                quantity: newQuantity,
-            }));
+        const value = e.target.value;
+    
+        if (value === '') {
+            setSelectedDrug(prevDrug => ({ ...prevDrug, quantity: '' }));
+            return;
         }
-    };
+    
+        const newQuantity = parseInt(value, 10);
+        if (!isNaN(newQuantity) && newQuantity >= 0) {
+            setSelectedDrug(prevDrug => ({ ...prevDrug, quantity: newQuantity }));
+        }
+    };    
 
     const handleAddToCart = () => {
         if (selectedDrug && selectedDrug.quantity > 0) {
@@ -414,7 +418,8 @@ const LoyaltyPharmacy = () => {
                                 value={selectedDrug.quantity}
                                 onChange={handleQuantityChange}
                                 min="0"
-                                style={{ width: '60px', marginLeft: '10px' }}
+                                placeholder='0'
+                                style={{ width: '100px', marginLeft: '10px' }}
                             />
                         </p>
                         <p><strong>Total Price:</strong> Rs. {selectedDrug.price * selectedDrug.quantity}</p>

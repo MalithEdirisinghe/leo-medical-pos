@@ -81,19 +81,23 @@ const OutdoorPharmacy = () => {
 
     // Handle row click and set selected drug
     const handleRowClick = (drug) => {
-        setSelectedDrug({ ...drug, quantity: 1 });
+        setSelectedDrug({ ...drug, quantity: '' });
     };
 
     // Handle quantity change
     const handleQuantityChange = (e) => {
-        const newQuantity = parseInt(e.target.value, 10);
-        if (newQuantity >= 0) {
-            setSelectedDrug((prevDrug) => ({
-                ...prevDrug,
-                quantity: newQuantity,
-            }));
+        const value = e.target.value;
+    
+        if (value === '') {
+            setSelectedDrug(prevDrug => ({ ...prevDrug, quantity: '' }));
+            return;
         }
-    };
+    
+        const newQuantity = parseInt(value, 10);
+        if (!isNaN(newQuantity) && newQuantity >= 0) {
+            setSelectedDrug(prevDrug => ({ ...prevDrug, quantity: newQuantity }));
+        }
+    };    
 
     // Handle Add to Cart button click
     const handleAddToCart = () => {
@@ -184,7 +188,7 @@ const OutdoorPharmacy = () => {
             await connectToQZ();
             const now = new Date();
             const formattedDateTime = now.toLocaleString();
-            const config = qz.configs.create("Microsoft Print to PDF"); // Update printer name
+            const config = qz.configs.create("XP-58 (copy 1)"); // Update printer name
 
             const data = [
                 "\x1B\x45\x01",            // Bold on
@@ -303,7 +307,8 @@ const OutdoorPharmacy = () => {
                                 value={selectedDrug.quantity}
                                 onChange={handleQuantityChange}
                                 min="0"
-                                style={{ width: '60px', marginLeft: '10px' }}
+                                placeholder='0'
+                                style={{ width: '100px', marginLeft: '10px' }}
                             />
                         </p>
                         <p><strong>Total Price:</strong> Rs. {selectedDrug.price * selectedDrug.quantity}</p>
