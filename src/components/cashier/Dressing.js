@@ -147,7 +147,7 @@ const Dressing = () => {
       const data = [
         "\x1B\x45\x01",        // Bold ON
         "\x1D\x21\x11",        // Double width + height
-        "LEO Medical POS\n\n",
+        "LEO DOCTOR HOUSE\n\n",
         "\x1D\x21\x00",        // Back to normal size
         "\x1B\x45\x01",
 

@@ -613,7 +613,7 @@ const IndoorPharmacy = () => {
                             >
                                 {isPrinting ? (
                                     <>
-                                        <div className="spinner"></div>
+                                        <div className="spinners"></div>
                                         <span style={{ opacity: 0 }}>Print</span>
                                     </>
                                 ) : (

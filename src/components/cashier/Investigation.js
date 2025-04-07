@@ -63,7 +63,7 @@ const Investigation = () => {
     const fetchNegativeSales = async () => {
       const salesSnapshot = await getDocs(collection(db, 'investigationSales'));
       const allSales = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const filtered = allSales.filter(sale => sale.balance < 0);
+      const filtered = allSales.filter(sale => sale.balance < 0 && !sale.settleStatus);
       setNegativeBalanceSales(filtered);
     };
     fetchNegativeSales();
@@ -127,7 +127,8 @@ const Investigation = () => {
         cash: Number(cash),
         balance: Number(balance),
         cashierName,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        settleStatus: balance < 0 ? false : true,
       };
 
       console.log("💾 Saving sale:", saleData);
@@ -146,7 +147,7 @@ const Investigation = () => {
       const data = [
         "\x1B\x45\x01",        // Bold ON
         "\x1D\x21\x11",        // Double width + height
-        "LEO Medical POS\n\n",
+        "LEO DOCTOR HOUSE\n\n",
         "\x1D\x21\x00",        // Back to normal size
         "\x1B\x45\x01",
 
@@ -216,8 +217,7 @@ const Investigation = () => {
 
         // 1. ✅ Update `investigationSales` doc
         await updateDoc(doc(db, 'investigationSales', matchedDoc.id), {
-          balance: 0,
-          cash: updatedCash
+          settleStatus: true,
         });
 
         // 2. ✅ Insert into `investigationSettle` collection

@@ -30,7 +30,7 @@ const OutdoorPharmacy = () => {
     const [selectedDrug, setSelectedDrug] = useState(null);
     const [cart, setCart] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [cashAmount, setCashAmount] = useState(0);
+    const [cashAmount, setCashAmount] = useState('');
     const [balance, setBalance] = useState(0);
     const [isPrinting, setIsPrinting] = useState(false);
     const cashierName = localStorage.getItem("cashierName") || "Unknown";
@@ -131,6 +131,10 @@ const OutdoorPharmacy = () => {
     }
 
     const handleSell = () => {
+        if(cart.length === 0){
+            alert('Cart is empty. Please add items before proceeding.');
+            return;
+        }
         setShowModal(true);
     };
 
@@ -180,12 +184,12 @@ const OutdoorPharmacy = () => {
             await connectToQZ();
             const now = new Date();
             const formattedDateTime = now.toLocaleString();
-            const config = qz.configs.create("XP-58 (copy 1)"); // Update printer name
+            const config = qz.configs.create("Microsoft Print to PDF"); // Update printer name
 
             const data = [
                 "\x1B\x45\x01",            // Bold on
                 "\x1D\x21\x11",            // Double size
-                "LEO Medical POS\n\n",
+                "LEO DOCTOR HOUSE\n\n",
                 "\x1D\x21\x00",            // Normal
                 "  --- Outdoor Pharmacy Bill ---\n",
                 "--------------------------------\n",
@@ -217,7 +221,7 @@ const OutdoorPharmacy = () => {
             // UI reset
             setCart([]);
             setSelectedDrug(null);
-            setCashAmount(0);
+            setCashAmount('');
             setBalance(0);
             setShowModal(false);
 
