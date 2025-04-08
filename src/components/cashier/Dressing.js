@@ -316,7 +316,7 @@ const Dressing = () => {
                 disabled={isLoading}
                 style={{ opacity: isLoading ? 0.5 : 1 }}
               >
-                {isLoading ? <div className="spinner" /> : "Print & Save"}
+                {isLoading ? <div className="spinners1" /> : "Print & Save"}
               </button>
 
               <button
