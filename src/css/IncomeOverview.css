@@ -1,4 +1,4 @@
-.income-overview {
+/* .income-overview {
     padding: 40px 20px;
     background-color: #f6f7fb;
     min-height: 100vh;
@@ -26,7 +26,6 @@
     max-height: 85vh;
   }
   
-  /* Each section inside the main container */
   .sub-section {
     margin-bottom: 40px;
   }
@@ -39,7 +38,6 @@
     padding-bottom: 6px;
   }
   
-  /* Tables */
   .income-overview table {
     width: 100%;
     border-collapse: collapse;
@@ -79,7 +77,6 @@
     width: 60px;
     height: 60px;
     animation: spin 1s linear infinite;
-    /* margin-bottom: 15px; */
   }
   
   @keyframes spin {
@@ -87,7 +84,6 @@
     100% { transform: rotate(360deg); }
   }
   
-  /* Responsive */
   @media (max-width: 768px) {
     table {
       font-size: 14px;
@@ -141,7 +137,6 @@
     padding-bottom: 6px;
   }
   
-  /* Scrollable table wrapper */
   .table-wrapper {
     max-height: 300px;
     overflow-y: auto;
@@ -149,7 +144,6 @@
     border-radius: 8px;
   }
   
-  /* Table styling */
   .table-wrapper table {
     width: 100%;
     border-collapse: collapse;
@@ -204,7 +198,6 @@
   }
 }
 
-  /* Fix horizontal overflow from cart items */
 .table-wrapper ul {
   list-style: none;
   margin: 0;
@@ -221,16 +214,14 @@
   overflow-wrap: anywhere;
 }
 
-/* Allow horizontal scroll only if absolutely needed */
 .table-wrapper {
   max-height: 300px;
   overflow-y: auto;
-  overflow-x: auto; /* added horizontal scroll safety */
+  overflow-x: auto;
   border: 1px solid #ddd;
   border-radius: 8px;
 }
 
-/* Prevent entire page from horizontal scroll */
 .income-overview {
   overflow-x: hidden;
 }
@@ -261,4 +252,206 @@ tfoot td {
 .grand-totals h3 {
   margin-bottom: 10px;
   color: #333;
+} */
+
+.income-overview {
+  padding: 5vh 5vw;
+  background-color: #f6f7fb;
+  min-height: 100vh;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.income-overview h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.main-container {
+  width: 100%;
+  max-width: 90vw;
+  background-color: #e0d9d9;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.sub-section {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+}
+
+.sub-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #444;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.table-wrapper {
+  max-height: 40vh;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.table-wrapper th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table-wrapper tr:hover {
+  background-color: #f9f9f9;
+}
+
+.table-wrapper ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+.table-wrapper li {
+  background-color: #f9f9f9;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+tfoot td {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+}
+
+.table-totals {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.grand-totals {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: #fefefe;
+  border-top: 2px solid #ccc;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.grand-totals h3 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  border: 0.375rem solid #f3f3f3;
+  border-top: 0.375rem solid #3498db;
+  border-radius: 50%;
+  width: 3.5rem;
+  height: 3.5rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading svg polyline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.loading svg polyline#back {
+  stroke: #ff4d5033;
+}
+
+.loading svg polyline#front {
+  stroke: #ff4d4f;
+  stroke-dasharray: 48, 144;
+  stroke-dashoffset: 192;
+  animation: dash_682 1.4s linear infinite;
+}
+
+@keyframes dash_682 {
+  72.5% {
+    opacity: 0;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+  .income-overview h1 {
+    font-size: 1.75rem;
+  }
+
+  .sub-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .table-wrapper th,
+  .table-wrapper td {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+
+  .main-container {
+    padding: 1rem;
+  }
+
+  .table-totals,
+  .grand-totals {
+    font-size: 0.95rem;
+  }
 }
