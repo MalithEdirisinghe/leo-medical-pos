@@ -19,6 +19,7 @@ const IncomeOverview = () => {
   const [investigationSettleSearch, setInvestigationSettleSearch] = useState('');
   const [dressingSearch, setDressingSearch] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [globalDoctorSearch, setGlobalDoctorSearch] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,7 +54,8 @@ const IncomeOverview = () => {
       (e.saleId || '').toLowerCase().includes(indoorSearch.toLowerCase()) ||
       (e.cashier || '').toLowerCase().includes(indoorSearch.toLowerCase()) ||
       (e.doctor || '').toLowerCase().includes(indoorSearch.toLowerCase())
-    )
+    ) &&
+    (e.doctor || '').toLowerCase().includes(globalDoctorSearch.toLowerCase())
   );
 
   const filteredLoyaltyIndoor = loyaltyIndoorData.filter(e =>
@@ -62,7 +64,8 @@ const IncomeOverview = () => {
       (e.saleId || '').toLowerCase().includes(loyaltyIndoorSearch.toLowerCase()) ||
       (e.cashier || '').toLowerCase().includes(loyaltyIndoorSearch.toLowerCase()) ||
       (e.doctor || '').toLowerCase().includes(loyaltyIndoorSearch.toLowerCase())
-    )
+    )&&
+    (e.doctor || '').toLowerCase().includes(globalDoctorSearch.toLowerCase())
   );
 
   const filteredOutdoor = outdoorData.filter(e =>
@@ -98,7 +101,8 @@ const IncomeOverview = () => {
         (e.saleId || '').toLowerCase().includes(dressingSearch.toLowerCase()) ||
         (e.patientName || '').toLowerCase().includes(dressingSearch.toLowerCase()) ||
         (e.cashierName || '').toLowerCase().includes(dressingSearch.toLowerCase())
-      )
+      ) &&
+      (e.doctorName || '').toLowerCase().includes(globalDoctorSearch.toLowerCase())
     )
   );
 
@@ -131,6 +135,16 @@ const IncomeOverview = () => {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="date-input"
+            />
+          </div>
+          <div className="doctor-filter-container">
+            <label><strong>Search by Doctor Name (Global):</strong></label>
+            <input
+              type="text"
+              placeholder="Enter doctor name..."
+              value={globalDoctorSearch}
+              onChange={(e) => setGlobalDoctorSearch(e.target.value)}
+              className="search-input"
             />
           </div>
 
