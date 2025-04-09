@@ -168,8 +168,8 @@ const AdminAction = () => {
 
     return (
         <div className="admin-action">
-            <button 
-                className="back-button" 
+            <button
+                className="back-button"
                 onClick={() => navigate(-1)}
                 style={{
                     position: 'absolute',
@@ -191,49 +191,13 @@ const AdminAction = () => {
             <div className="form-row">
                 {/* Add Doctor Section */}
                 <div className="form-containers">
-                    <h2>Add New Doctor</h2>
+                    <h2>Add / Update Doctor</h2>
                     <input
                         type="text"
                         placeholder="Doctor Name"
                         value={doctorName}
                         onChange={(e) => setDoctorName(e.target.value)}
                     />
-                    <button className="add-button" onClick={handleAddDoctor}>
-                        Add Doctor
-                    </button>
-                </div>
-
-                {/* Add Doctor Charge Section */}
-                <div className="form-containers">
-                    <h2>Add New Doctor Charge</h2>
-                    <input
-                        type="number"
-                        placeholder="Doctor Charge"
-                        value={doctorCharge}
-                        onChange={(e) => setDoctorCharge(e.target.value)}
-                    />
-                    <button className="add-button" onClick={handleAddDoctorCharge}>
-                        Add Charge
-                    </button>
-                </div>
-
-                {/* Add Channeling Charge Section */}
-                <div className="form-containers">
-                    <h2>Add New Channeling Charge</h2>
-                    <input
-                        type="number"
-                        placeholder="Channeling Charge"
-                        value={channelingCharge}
-                        onChange={(e) => setChannelingCharge(e.target.value)}
-                    />
-                    <button className="add-button" onClick={handleAddChannelingCharge}>
-                        Add Charge
-                    </button>
-                </div>
-
-                {/* Edit/Delete Doctor */}
-                <div className="form-containers">
-                    <h2>Edit or Delete Doctor</h2>
                     <select
                         onChange={(e) => {
                             const doctor = doctors.find(d => d.id === e.target.value);
@@ -249,17 +213,26 @@ const AdminAction = () => {
                             </option>
                         ))}
                     </select>
-                    <button className="edit-button" onClick={handleUpdateDoctor} disabled={!selectedDoctor}>
-                        Update
+                    <button
+                        className="add-button"
+                        onClick={selectedDoctor ? handleUpdateDoctor : handleAddDoctor}
+                    >
+                        {selectedDoctor ? 'Update Doctor' : 'Add Doctor'}
                     </button>
                     <button className="delete-button" onClick={handleDeleteDoctor} disabled={!selectedDoctor}>
                         Delete
                     </button>
                 </div>
 
-                {/* Edit/Delete Doctor Charge */}
+                {/* Add Doctor Charge Section */}
                 <div className="form-containers">
-                    <h2>Edit or Delete Doctor Charge</h2>
+                    <h2>Add / Update Doctor Charge</h2>
+                    <input
+                        type="number"
+                        placeholder="Doctor Charge"
+                        value={doctorCharge}
+                        onChange={(e) => setDoctorCharge(e.target.value)}
+                    />
                     <select
                         onChange={(e) => {
                             const charge = doctorCharges.find(c => c.id === e.target.value);
@@ -275,17 +248,26 @@ const AdminAction = () => {
                             </option>
                         ))}
                     </select>
-                    <button className="edit-button" onClick={handleUpdateDoctorCharge} disabled={!selectedDoctorCharge}>
-                        Update
+                    <button
+                        className="add-button"
+                        onClick={selectedDoctorCharge ? handleUpdateDoctorCharge : handleAddDoctorCharge}
+                    >
+                        {selectedDoctorCharge ? 'Update Charge' : 'Add Charge'}
                     </button>
                     <button className="delete-button" onClick={handleDeleteDoctorCharge} disabled={!selectedDoctorCharge}>
                         Delete
                     </button>
                 </div>
 
-                {/* Edit/Delete Channeling Charge */}
+                {/* Add Channeling Charge Section */}
                 <div className="form-containers">
-                    <h2>Edit or Delete Channeling Charge</h2>
+                    <h2>Add / Update Channeling Charge</h2>
+                    <input
+                        type="number"
+                        placeholder="Channeling Charge"
+                        value={channelingCharge}
+                        onChange={(e) => setChannelingCharge(e.target.value)}
+                    />
                     <select
                         onChange={(e) => {
                             const charge = channelingCharges.find(c => c.id === e.target.value);
@@ -301,8 +283,11 @@ const AdminAction = () => {
                             </option>
                         ))}
                     </select>
-                    <button className="edit-button" onClick={handleUpdateChannelingCharge} disabled={!selectedChannelingCharge}>
-                        Update
+                    <button
+                        className="add-button"
+                        onClick={selectedChannelingCharge ? handleUpdateChannelingCharge : handleAddChannelingCharge}
+                    >
+                        {selectedChannelingCharge ? 'Update Charge' : 'Add Charge'}
                     </button>
                     <button className="delete-button" onClick={handleDeleteChannelingCharge} disabled={!selectedChannelingCharge}>
                         Delete
