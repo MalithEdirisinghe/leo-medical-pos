@@ -1,21 +1,19 @@
-html, body {
-    margin: 0;
-    padding: 0;
+ html, body {
+    height: auto;
     min-height: 100vh;
     overflow-y: auto;
+  }  
+ .admin-action {
+    padding: 3rem;
     font-family: 'Arial', sans-serif;
-  }
-  
-  .admin-action {
-    padding: 3rem 2rem;
     background-color: #f8f9fa;
     border-radius: 0.5rem;
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
     max-width: 90vw;
     margin: 1.25rem auto;
-    min-height: 100vh;
     position: relative;
-  }  
+    min-height: 100vh;
+  }
   
   h2 {
     font-size: 1.25rem;
